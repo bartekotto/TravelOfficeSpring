@@ -1,41 +1,39 @@
 package com.example.traveloffice.Service;
 
 import com.example.traveloffice.*;
+import org.aspectj.weaver.ast.Test;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 
 @Service
-public class TravelOfficeService implements TravelOfficeServiceInterface{
+public class TravelOfficeService implements TravelOfficeServiceInterface {
     private TravelOffice travelOffice = new TravelOffice();
     private int tripID = 0;
 
 
-    private LocalDate stringToDate(String str) {
-        Character[] breaks = {'/', '-', ' '};
+    public LocalDate stringToDate(String dateString) {
+        Character[] breaksList = {'/', '-', ' ','.'};
         int[] date = {0, 0, 0};
-        int time = 0;
-        int now = 0;
-        int pow = 1;
-        for (int i = 0, n = str.length(); i < n; i++) {
-            char c = str.charAt(i);
-            if (Arrays.asList(breaks).contains(c)) {
-                time++;
-                pow = 1;
-                now = 0;
-                if (time == 2) {
-                    pow = 3;
-                }
+        String timeValue = "";
+        int dayMonthYear = 0;
+        dateString +=".";
+        for (int i = 0, n = dateString.length(); i < n; i++) {
+            char c = dateString.charAt(i);
+            if (Arrays.asList(breaksList).contains(c)) {
+                date[dayMonthYear] = Integer.valueOf(timeValue);
+                dayMonthYear++;
+                timeValue = "";
             } else {
-                int kek = Character.getNumericValue(c) * ((int) Math.pow(10, pow));
-                now += kek;
-                date[time] = now;
-                pow--;
+                timeValue += c;
             }
         }
         return LocalDate.of(date[2], date[1], date[0]);
     }
+
 
     @Override
     public Customer addCustomer(String street, String zip, String city, String name) {
@@ -46,6 +44,7 @@ public class TravelOfficeService implements TravelOfficeServiceInterface{
         travelOffice.addCustomer(customer);
         return customer;
     }
+
     @Override
     public Customer removeCustomer(String name) {
         try {
@@ -56,6 +55,7 @@ public class TravelOfficeService implements TravelOfficeServiceInterface{
             return null;
         }
     }
+
     @Override
     public Trip addAbroadTrip(String startLocalDateString, String endLocalDateString, String destination, String priceString, String insurance) {
         LocalDate startLocalDate = stringToDate(startLocalDateString);
@@ -67,6 +67,7 @@ public class TravelOfficeService implements TravelOfficeServiceInterface{
         tripID++;
         return abroadTrip;
     }
+
     @Override
     public Trip addDomesticTrip(String startLocalDateString, String endLocalDateString, String destination, String priceString, String discount) {
         LocalDate startLocalDate = stringToDate(startLocalDateString);
@@ -81,31 +82,42 @@ public class TravelOfficeService implements TravelOfficeServiceInterface{
 
     @Override
     public Trip removeTrip(String id) {
+
+
         try {
-            travelOffice.removeTrip(id);
-            return travelOffice.findTripByID()
+            for (Customer customer :
+                showCustomers()) {
+            if (customer.getTrip() == travelOffice.findTripByID(String.valueOf(id))){
+                customer.setTrip(null);
+            }
+        }
+            return travelOffice.removeTrip(id);
         } catch (NoSuchTripException nST) {
             return null;
         }
     }
 
     @Override
-    public Trip showTrips() {
-        return null;
+    public HashMap<String, Trip> showTrips() {
+        return TravelOffice.getTripMap();
     }
 
     @Override
-    public Customer showCustomers() {
-        return null;
+    public HashSet<Customer> showCustomers() {
+        return TravelOffice.getCustomerHashSet();
     }
 
     @Override
-    public Address addAddress() {
-        return null;
+    public Address addAddress(String street, String zip, String city) {
+        return new Address(street, zip, city);
     }
 
     @Override
-    public Void assignTrip() {
-        return null;
+    public void assignTrip(String name, String id) {
+        try {
+            travelOffice.findCustomerByName(name).setTrip(travelOffice.findTripByID(String.valueOf(id)));
+        } catch (NoSuchCustomerException | NoSuchTripException nS) {
+            nS.printStackTrace();
+        }
     }
 }

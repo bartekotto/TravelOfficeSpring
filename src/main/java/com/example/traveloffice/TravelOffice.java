@@ -58,8 +58,9 @@ public class TravelOffice {
     }
 
     public Trip removeTrip(String s) throws NoSuchTripException {
+        Trip trip = tripMap.get(s);
         if (tripMap.remove(s) != null) {
-            return true;
+            return trip;
         } else {
             throw new NoSuchTripException("No such trip was found");
         }
